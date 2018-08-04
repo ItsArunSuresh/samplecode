@@ -1,0 +1,65 @@
+app.controller('purchaserCtrl', ['$cookieStore','$scope','$timeout','$location','$http','md5','$filter', function ($cookieStore, $scope, $timeout, $location, $http, md5, $filter) {
+	dispCurrentUser($cookieStore, $scope, $location);
+	setBackButton($scope,$location);
+	httpheaders($cookieStore,md5,$http);
+	$("#dash").removeClass("active");
+	$("#set").removeClass("active");
+	$("#team").addClass("active");
+	function refresh(){
+		$http.post(apiURL+'/getpurchaser',{}).success(function(msg){
+			if(msg.status=="success"){
+				$scope.purchase=msg.data;
+			}
+			else{
+				$scope.purchase="";
+			}
+	    });
+	}
+	refresh();
+
+	$scope.add=function(){
+		var data=new Object();
+		data=$scope.purchaser;
+		if(data.username && data.name.first && data.name.last && data.mobile && data.email && data.address){
+			$http.post(apiURL+'/addpurchaser', data).success(function(msg){
+				if(msg.status=="success"){
+					$scope.purchaser={};
+	        		angular.element("#defaultModal").modal('hide');
+	        		refresh();
+	       		}else{
+	       			setNotes($scope,'Already Exists', 'error', $timeout, 'purNote', 'purNoteSt','yes');
+	       		} 
+		    });
+		}
+		else{
+			setNotes($scope,'Enter all Details', 'error', $timeout, 'purNote', 'purNoteSt','yes');
+		}
+	}
+	$scope.edit=function(ind){
+		
+		$scope.purch=$scope.purchase[ind];		
+	}
+	$scope.update=function(){
+		purchaser=$scope.purch;
+		if(purchaser.username && purchaser.name.first && purchaser.name.last && purchaser.mobile && purchaser.email && purchaser.address){
+			$http.post(apiURL+'/updatepurchaser', purchaser).success(function(msg){
+				$scope.purch=[]
+	        	angular.element("#editModal").modal('hide');       
+		    });
+		}
+		else{
+			setNotes($scope,'Enter all Details', 'error', $timeout, 'puredNote', 'puredNoteSt','yes');
+		}
+	}
+	$scope.delete=function(ind){
+		var del=new Object();
+		del._id=$scope.purchase[ind]._id;
+		if (confirm("Are you sure you want to delete this purchaser?") == true){ 
+			$http.post(apiURL+'/deletepurchaser', del).success(function(msg){
+				if(msg.status=="success"){
+		           	refresh();
+	          	}       
+		    });
+		}
+	}	
+}]);
